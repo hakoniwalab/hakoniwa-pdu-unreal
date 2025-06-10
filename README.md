@@ -17,7 +17,7 @@ This makes it possible to accurately visualize drones, robots, and other simulat
 
 ## 🧩 Architecture
 
-![hakoniwa-unreal-architecture](https://github.com/user-attachments/assets/32b2504d-d83f-4668-89fb-44c2fdde2446)
+![スクリーンショット 2025-06-10 9 52 34](https://github.com/user-attachments/assets/ed9c116b-756a-4b89-8415-9d39c54c1389)
 
 This architecture separates **simulation** and **visualization** concerns:
 
