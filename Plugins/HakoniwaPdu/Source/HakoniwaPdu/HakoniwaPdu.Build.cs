@@ -25,7 +25,7 @@ public class HakoniwaPdu : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core",
+				"Core", "WebSockets"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
