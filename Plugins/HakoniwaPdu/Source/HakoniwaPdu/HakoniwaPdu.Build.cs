@@ -1,5 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+using System.IO;
 using UnrealBuildTool;
 
 public class HakoniwaPdu : ModuleRules
@@ -10,6 +11,7 @@ public class HakoniwaPdu : ModuleRules
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
+                Path.Combine(ModuleDirectory, "../../../../ThirdParty/hakoniwa-ros2pdu/pdu/types")
 				// ... add public include paths required here ...
 			}
 			);
