@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "PduManager.h"
+#include "WebSocketCommunicationService.h"
+
 #include "PluginTester.generated.h"
 
 
@@ -11,6 +14,11 @@ UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class HAKONIWAPDUDEV_API UPluginTester : public UActorComponent
 {
 	GENERATED_BODY()
+
+private:
+	UWebSocketCommunicationService* service = nullptr;
+	UPduManager* pduManager = nullptr;
+
 
 public:	
 	// Sets default values for this component's properties

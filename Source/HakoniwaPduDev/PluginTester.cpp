@@ -20,6 +20,12 @@ void UPluginTester::BeginPlay()
     {
         FModuleManager::Get().LoadModule(ModuleName);
     }
+
+    service = NewObject<UWebSocketCommunicationService>();
+    pduManager = NewObject<UPduManager>();
+
+    pduManager->Initialize("Config/webavatar.json", service);
+    pduManager->StartService("ws://172.31.9.252:8765");
 }
 
 void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -34,6 +40,10 @@ void UPluginTester::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
 
+    if (pduManager) {
+        pduManager->StopService();
+    }
+#if 0
     const FName ModuleName = "HakoniwaPdu";
     if (FModuleManager::Get().IsModuleLoaded(ModuleName))
     {
@@ -47,4 +57,5 @@ void UPluginTester::EndPlay(const EEndPlayReason::Type EndPlayReason)
             UE_LOG(LogTemp, Warning, TEXT("Failed to unload HakoniwaPdu"));
         }
     }
+#endif
 }

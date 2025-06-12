@@ -39,6 +39,7 @@ public:
         WebSocket->OnConnected().AddLambda([this]()
             {
                 UE_LOG(LogTemp, Log, TEXT("WebSocket connected."));
+                bServiceEnabled = true;
             });
 
         WebSocket->OnClosed().AddLambda([this](int32 StatusCode, const FString& Reason, bool bWasClean)
@@ -63,17 +64,34 @@ public:
             });
 
         WebSocket->Connect();
-        bServiceEnabled = true;
         return true;
     }
 
     virtual bool StopService() override
     {
-        if (WebSocket.IsValid())
+        if (!bServiceEnabled || !WebSocket.IsValid())
+        {
+            return false;
+        }
+
+        bServiceEnabled = false;
+
+        // イベントハンドラの解除
+        WebSocket->OnConnected().Clear();
+        WebSocket->OnConnectionError().Clear();
+        WebSocket->OnClosed().Clear();
+        WebSocket->OnMessage().Clear();
+        WebSocket->OnRawMessage().Clear();
+        WebSocket->OnMessageSent().Clear();
+
+        // 安全に切断
+        if (WebSocket->IsConnected())
         {
             WebSocket->Close();
         }
-        bServiceEnabled = false;
+
+        // 遅延しても完全解放
+        WebSocket.Reset();
         return true;
     }
 

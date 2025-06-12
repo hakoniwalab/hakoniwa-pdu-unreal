@@ -7,8 +7,8 @@
 class FHakoniwaPduModule : public IModuleInterface
 {
 public:
+    virtual void StartupModule() override;
+    virtual void ShutdownModule() override;
 
-	/** IModuleInterface implementation */
-	virtual void StartupModule() override;
-	virtual void ShutdownModule() override;
 };
+

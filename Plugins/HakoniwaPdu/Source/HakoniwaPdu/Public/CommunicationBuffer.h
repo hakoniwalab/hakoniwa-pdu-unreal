@@ -129,7 +129,23 @@ public:
         }
         return -1;
     }
+    int32 GetPduChannelId(const FString& RobotName, const FString& PduName) const
+    {
+        for (const FRobotConfig& Robot : ChannelConfig.robots)
+        {
+            if (Robot.name == RobotName)
+            {
+                for (const FPduChannel& Ch : Robot.shm_pdu_readers)
+                    if (Ch.name == PduName)
+                        return Ch.channel_id;
 
+                for (const FPduChannel& Ch : Robot.shm_pdu_writers)
+                    if (Ch.name == PduName)
+                        return Ch.channel_id;
+            }
+        }
+        return -1;
+    }
 
     void PutPacketDirect(const FString& RobotName, int32 ChannelId, const TArray<uint8>& PduData)
     {
