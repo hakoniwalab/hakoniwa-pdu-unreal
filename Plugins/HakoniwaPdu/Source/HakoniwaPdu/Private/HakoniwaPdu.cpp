@@ -6,6 +6,7 @@
 #if 1
 #include "IWebSocket.h"
 #include "WebSocketsModule.h"
+#include "PduChannelLoader.h"
 
 TSharedPtr<IWebSocket> WebSocket;
 
@@ -41,7 +42,13 @@ void FHakoniwaPduModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	UE_LOG(LogHakoniwaPdu, Log, TEXT("HakoniwaPdu: StartupModule called"));
-    ConnectWebSocket();
+    //ConnectWebSocket();
+    FPduChannelConfigStruct Config = UPduChannelLoader::Load(TEXT("Config/webavatar.json"));
+
+    for (const FRobotConfig& Robot : Config.robots)
+    {
+        UE_LOG(LogTemp, Log, TEXT("Robot: %s"), *Robot.name);
+    }
 }
 
 void FHakoniwaPduModule::ShutdownModule()
