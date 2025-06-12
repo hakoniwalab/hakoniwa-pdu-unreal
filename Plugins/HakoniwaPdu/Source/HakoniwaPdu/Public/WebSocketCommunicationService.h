@@ -58,6 +58,7 @@ public:
                         UDataPacket* Packet = UDataPacket::Decode(Payload);
                         if (Packet && CommBuffer)
                         {
+                            //UE_LOG(LogTemp, Log, TEXT("DataIn: Robot(%s) ChannelId(%d)"), *Packet->GetRobotName(), Packet->GetChannelId())
                             CommBuffer->PutPacket(Packet);
                         }
                     });

@@ -19,7 +19,7 @@ private:
 	UWebSocketCommunicationService* service = nullptr;
 	UPduManager* pduManager = nullptr;
 	bool isDeclared = false;
-
+	TArray<char> ReadTest(const FString& RobotName, const FString& PduName);
 
 public:	
 	// Sets default values for this component's properties

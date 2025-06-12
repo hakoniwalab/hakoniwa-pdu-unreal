@@ -2,6 +2,9 @@
 
 #include "PluginTester.h"
 #include "Modules/ModuleManager.h"
+#include "geometry_msgs/pdu_cpptype_conv_Twist.hpp"
+#include "hako_mavlink_msgs/pdu_cpptype_conv_HakoHilActuatorControls.hpp"
+#include "pdu_convertor.hpp"
 
 UPluginTester::UPluginTester()
 {
@@ -53,7 +56,56 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
             UE_LOG(LogTemp, Warning, TEXT("Can not be enabled pduManager service"));
         }
     }
+    else {
+        TArray<char> buffer = ReadTest("Drone", "pos");
+        if (buffer.Num() > 0) {
+            HakoCpp_Twist pos;
+            hako::pdu::PduConvertor<HakoCpp_Twist, hako::pdu::msgs::geometry_msgs::Twist> conv;
+            conv.pdu2cpp(buffer.GetData(), pos);
+            UE_LOG(LogTemp, Log, TEXT("Twist.linear = (%lf, %lf, %lf), angular = (%lf, %lf, %lf)"),
+                pos.linear.x, pos.linear.y, pos.linear.z,
+                pos.angular.x, pos.angular.y, pos.angular.z);
+        }
+        buffer = ReadTest("Drone", "motor");
+        if (buffer.Num() > 0) {
+            HakoCpp_HakoHilActuatorControls motor;
+            hako::pdu::PduConvertor<HakoCpp_HakoHilActuatorControls, hako::pdu::msgs::hako_mavlink_msgs::HakoHilActuatorControls> conv;
+            conv.pdu2cpp(buffer.GetData(), motor);
+            UE_LOG(LogTemp, Log, TEXT("motor.time_usec = %llu"), motor.time_usec);
 
+            FString controlStr;
+            for (int i = 0; i < motor.controls.size(); i++) {
+                controlStr += FString::Printf(TEXT("%.3f "), motor.controls[i]);
+            }
+            UE_LOG(LogTemp, Log, TEXT("motor.controls = [%s]"), *controlStr);
+            UE_LOG(LogTemp, Log, TEXT("motor.mode = %d"), motor.mode);
+            UE_LOG(LogTemp, Log, TEXT("motor.flags = %llu"), motor.flags);
+        }
+    }
+
+}
+TArray<char> UPluginTester::ReadTest(const FString& RobotName, const FString& PduName)
+{
+    TArray<char> buffer;
+
+    int32 pdu_size = pduManager->GetPduSize(RobotName, PduName);
+    if (pdu_size <= 0) {
+        UE_LOG(LogTemp, Error, TEXT("Can not get pdu size..."));
+        return buffer;  // ‹ó‚Ì”z—ñ‚ð•Ô‚·
+    }
+
+    buffer.SetNum(pdu_size);
+    char* rawPtr = buffer.GetData();
+
+    if (pduManager->ReadPduRawData(RobotName, PduName, rawPtr, pdu_size)) {
+        UE_LOG(LogTemp, Log, TEXT("Read PDU succeeded: robot=%s, pdu=%s, size=%d"),
+            *RobotName, *PduName, pdu_size);
+        return buffer;
+    }
+    else {
+        //UE_LOG(LogTemp, Error, TEXT("Failed to read PDU: robot=%s, pdu=%s"), *RobotName, *PduName);
+        return TArray<char>();  // “Ç‚ÝŽæ‚èŽ¸”sŽž‚Í‹ó‚Ì”z—ñ‚ð•Ô‚·
+    }
 }
 
 

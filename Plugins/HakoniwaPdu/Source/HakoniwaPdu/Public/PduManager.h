@@ -150,7 +150,7 @@ public:
 		TArray<uint8> RawData = CommBuffer->GetBuffer(Key);
 
 		if (RawData.Num() <= 0) {
-			UE_LOG(LogTemp, Warning, TEXT("No data available for %s:%s"), *RobotName, *PduName);
+			//UE_LOG(LogTemp, Warning, TEXT("No data available for %s:%s"), *RobotName, *PduName);
 			return false;
 		}
 
