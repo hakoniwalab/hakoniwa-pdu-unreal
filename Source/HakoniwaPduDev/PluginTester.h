@@ -18,6 +18,7 @@ class HAKONIWAPDUDEV_API UPluginTester : public UActorComponent
 private:
 	UWebSocketCommunicationService* service = nullptr;
 	UPduManager* pduManager = nullptr;
+	bool isDeclared = false;
 
 
 public:	

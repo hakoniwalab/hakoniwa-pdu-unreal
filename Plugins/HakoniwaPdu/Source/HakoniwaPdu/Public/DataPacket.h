@@ -58,7 +58,6 @@ public:
 
         return Data;
     }
-
     static UDataPacket* Decode(const TArray<uint8>& Data)
     {
         if (Data.Num() < 12)
@@ -69,26 +68,27 @@ public:
 
         int32 Index = 0;
         int32 HeaderLength = 0;
-        FMemory::Memcpy(&HeaderLength, Data.GetData() + Index, 4);
-        Index += 4;
+        FMemory::Memcpy(&HeaderLength, Data.GetData() + Index, sizeof(int32));
+        Index += sizeof(int32);
 
         int32 NameLen = 0;
-        FMemory::Memcpy(&NameLen, Data.GetData() + Index, 4);
-        Index += 4;
+        FMemory::Memcpy(&NameLen, Data.GetData() + Index, sizeof(int32));
+        Index += sizeof(int32);
 
-        if (Index + NameLen + 4 > Data.Num())
+        if (Index + NameLen + sizeof(int32) > Data.Num())
         {
             UE_LOG(LogTemp, Error, TEXT("Invalid robot name length"));
             return nullptr;
         }
 
         const ANSICHAR* Utf8Ptr = reinterpret_cast<const ANSICHAR*>(Data.GetData() + Index);
-        FString RobotName = UTF8_TO_TCHAR(Utf8Ptr);
+        FUTF8ToTCHAR Converted(Utf8Ptr, NameLen);
+        FString RobotName(Converted.Length(), Converted.Get());
         Index += NameLen;
 
         int32 ChannelId = 0;
-        FMemory::Memcpy(&ChannelId, Data.GetData() + Index, 4);
-        Index += 4;
+        FMemory::Memcpy(&ChannelId, Data.GetData() + Index, sizeof(int32));
+        Index += sizeof(int32);
 
         TArray<uint8> Body;
         int32 BodyLen = Data.Num() - Index;
@@ -103,6 +103,7 @@ public:
         Packet->SetPduData(Body);
         return Packet;
     }
+
 };
 
 // グローバル定数定義

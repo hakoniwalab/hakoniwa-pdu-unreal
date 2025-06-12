@@ -5,7 +5,7 @@
 
 UPluginTester::UPluginTester()
 {
-    PrimaryComponentTick.bCanEverTick = false;  // 必要なら true に
+    PrimaryComponentTick.bCanEverTick = true;
 }
 
 void UPluginTester::BeginPlay()
@@ -26,13 +26,28 @@ void UPluginTester::BeginPlay()
 
     pduManager->Initialize("Config/webavatar.json", service);
     pduManager->StartService("ws://172.31.9.252:8765");
+
 }
 
 void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    // 必要ならTick処理を書く
+    if (isDeclared == false) {
+        if (pduManager->IsServiceEnabled()) {
+            if (pduManager->DeclarePduForRead("Drone", "pos")) {
+                UE_LOG(LogTemp, Log, TEXT("Successfully declared Drone:pos"));
+            }
+            else {
+                UE_LOG(LogTemp, Warning, TEXT("Failed to declare Drone:pos"));
+            }
+            isDeclared = true;
+        }
+        else {
+            UE_LOG(LogTemp, Error, TEXT("Can not be enabled pduManager service"));
+        }
+    }
+
 }
 
 

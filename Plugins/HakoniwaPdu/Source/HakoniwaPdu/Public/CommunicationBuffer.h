@@ -119,11 +119,11 @@ public:
             if (Robot.name == RobotName)
             {
                 for (const FPduChannel& Ch : Robot.shm_pdu_readers)
-                    if (Ch.name == PduName)
+                    if (Ch.org_name == PduName)
                         return Ch.pdu_size;
 
                 for (const FPduChannel& Ch : Robot.shm_pdu_writers)
-                    if (Ch.name == PduName)
+                    if (Ch.org_name == PduName)
                         return Ch.pdu_size;
             }
         }
@@ -136,11 +136,11 @@ public:
             if (Robot.name == RobotName)
             {
                 for (const FPduChannel& Ch : Robot.shm_pdu_readers)
-                    if (Ch.name == PduName)
+                    if (Ch.org_name == PduName)
                         return Ch.channel_id;
 
                 for (const FPduChannel& Ch : Robot.shm_pdu_writers)
-                    if (Ch.name == PduName)
+                    if (Ch.org_name == PduName)
                         return Ch.channel_id;
             }
         }
