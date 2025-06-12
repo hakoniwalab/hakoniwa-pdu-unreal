@@ -35,6 +35,12 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 
     if (isDeclared == false) {
         if (pduManager->IsServiceEnabled()) {
+            if (pduManager->DeclarePduForRead("Drone", "motor")) {
+                UE_LOG(LogTemp, Log, TEXT("Successfully declared Drone:pos"));
+            }
+            else {
+                UE_LOG(LogTemp, Warning, TEXT("Failed to declare Drone:pos"));
+            }
             if (pduManager->DeclarePduForRead("Drone", "pos")) {
                 UE_LOG(LogTemp, Log, TEXT("Successfully declared Drone:pos"));
             }
@@ -44,7 +50,7 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
             isDeclared = true;
         }
         else {
-            UE_LOG(LogTemp, Error, TEXT("Can not be enabled pduManager service"));
+            UE_LOG(LogTemp, Warning, TEXT("Can not be enabled pduManager service"));
         }
     }
 
