@@ -88,6 +88,7 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
                 {
                     FVector CurrentLocation = ParentActor->GetActorLocation();
                     FRotator CurrentRotation = ParentActor->GetActorRotation();
+                    FVector CurrentScale = ParentActor->GetActorScale3D();
                     // 急激な変更を避ける
                     float MaxDistance = 1000.0f; // 1フレームでの最大移動距離
                     if (FVector::Dist(CurrentLocation, NewLocation) > MaxDistance)
@@ -97,7 +98,7 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
                     }
 
                     // SetActorTransform を使用（より安全）
-                    FTransform NewTransform(NewRotation, NewLocation);
+                    FTransform NewTransform(NewRotation, NewLocation, CurrentScale);
                     ParentActor->SetActorTransform(NewTransform, false, nullptr, ETeleportType::TeleportPhysics);
                 }
             }
