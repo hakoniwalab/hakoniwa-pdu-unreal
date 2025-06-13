@@ -52,10 +52,10 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
                 UE_LOG(LogTemp, Warning, TEXT("Failed to declare Drone:pos"));
             }
             if (pduManager->DeclarePduForRead("Drone", "pos")) {
-                UE_LOG(LogTemp, Log, TEXT("Successfully declared Drone:pos"));
+                UE_LOG(LogTemp, Log, TEXT("Successfully declared Drone:motor"));
             }
             else {
-                UE_LOG(LogTemp, Warning, TEXT("Failed to declare Drone:pos"));
+                UE_LOG(LogTemp, Warning, TEXT("Failed to declare Drone:motor"));
             }
             isDeclared = true;
         }
@@ -64,15 +64,17 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
         }
     }
     else {
-        //TArray<char> buffer = ReadTest("Drone", "pos");
-#if 0
+        TArray<uint8> buffer = ReadTest("Drone", "pos");
+#if 1
         if (buffer.Num() > 0) {
             HakoCpp_Twist pos;
             hako::pdu::PduConvertor<HakoCpp_Twist, hako::pdu::msgs::geometry_msgs::Twist> conv;
-            conv.pdu2cpp(buffer.GetData(), pos);
+            conv.pdu2cpp((char*)buffer.GetData(), pos);
+#if 0
             UE_LOG(LogTemp, Log, TEXT("Twist.linear = (%lf, %lf, %lf), angular = (%lf, %lf, %lf)"),
                 pos.linear.x, pos.linear.y, pos.linear.z,
                 pos.angular.x, pos.angular.y, pos.angular.z);
+#endif
             FVector NewLocation(pos.linear.x * 100.0f, -pos.linear.y * 100.0f, pos.linear.z * 100.0f);
 
             FRotator NewRotation(
@@ -96,7 +98,7 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 
                     // SetActorTransform を使用（より安全）
                     FTransform NewTransform(NewRotation, NewLocation);
-                    //ParentActor->SetActorTransform(NewTransform, false, nullptr, ETeleportType::TeleportPhysics);
+                    ParentActor->SetActorTransform(NewTransform, false, nullptr, ETeleportType::TeleportPhysics);
                 }
             }
             else {
@@ -125,28 +127,30 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
     }
 
 }
-TArray<char> UPluginTester::ReadTest(const FString& RobotName, const FString& PduName)
+TArray<uint8> UPluginTester::ReadTest(const FString& RobotName, const FString& PduName)
 {
-    TArray<char> buffer;
+    TArray<uint8> buffer;
 
     int32 pdu_size = pduManager->GetPduSize(RobotName, PduName);
     if (pdu_size <= 0) {
         UE_LOG(LogTemp, Error, TEXT("Can not get pdu size..."));
         return buffer;  // 空の配列を返す
     }
-
+    //UE_LOG(LogTemp, Log, TEXT("Read PDU TEST: robot=%s, pdu=%s, size=%d"),*RobotName, *PduName, pdu_size);
+#if 1
     buffer.SetNum(pdu_size);
-    char* rawPtr = buffer.GetData();
 
-    if (pduManager->ReadPduRawData(RobotName, PduName, rawPtr, pdu_size)) {
-        UE_LOG(LogTemp, Log, TEXT("Read PDU succeeded: robot=%s, pdu=%s, size=%d"),
-            *RobotName, *PduName, pdu_size);
+    if (pduManager->ReadPduRawData(RobotName, PduName, buffer)) {
+        //UE_LOG(LogTemp, Log, TEXT("Read PDU succeeded: robot=%s, pdu=%s, size=%d"), *RobotName, *PduName, pdu_size);
         return buffer;
     }
     else {
         //UE_LOG(LogTemp, Error, TEXT("Failed to read PDU: robot=%s, pdu=%s"), *RobotName, *PduName);
-        return TArray<char>();  // 読み取り失敗時は空の配列を返す
+        return TArray<uint8>();  // 読み取り失敗時は空の配列を返す
     }
+#else
+    return TArray<uint8>();
+#endif
 }
 
 
@@ -157,7 +161,7 @@ void UPluginTester::EndPlay(const EEndPlayReason::Type EndPlayReason)
     if (pduManager && IsValid(pduManager)) {
         pduManager->StopService();
     }
-    FPlatformProcess::Sleep(1.0f);
+    FPlatformProcess::Sleep(0.5f);
     pduManager = nullptr;
     service = nullptr;
 

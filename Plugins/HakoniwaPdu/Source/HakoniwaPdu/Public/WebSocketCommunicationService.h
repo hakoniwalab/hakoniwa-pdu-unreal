@@ -51,19 +51,18 @@ public:
                 TArray<uint8> Payload;
                 Payload.Append(reinterpret_cast<const uint8*>(Data), Size);
 
-                AsyncTask(ENamedThreads::GameThread, [WeakThis, Payload]()
-                    {
-                        if (!WeakThis.IsValid()) return;
-                        UWebSocketCommunicationService* Service = WeakThis.Get();
-                        if (Service->bIsDestroying) return;
+                if (!WeakThis.IsValid()) return;
+                UWebSocketCommunicationService* Service = WeakThis.Get();
+                if (Service->bIsDestroying) return;
+                //UE_LOG(LogTemp, Log, TEXT("DataIn: len=%d"), Payload.Num());
 
-                        UDataPacket* Packet = UDataPacket::Decode(Payload);
-                        if (Packet && Service->CommBuffer)
-                        {
-                            //UE_LOG(LogTemp, Log, TEXT("DataIn: Robot(%s) ChannelId(%d)"), *Packet->GetRobotName(), Packet->GetChannelId())
-                            Service->CommBuffer->PutPacket(Packet);
-                        }
-                    });
+                TOptional<FDataPacket> OptionalPacket = FDataPacket::Decode(Payload);
+                if (OptionalPacket.IsSet() && Service->CommBuffer)
+                {
+                    const FDataPacket& Packet = OptionalPacket.GetValue();
+                    // UE_LOG(LogTemp, Log, TEXT("DataIn: Robot(%s) ChannelId(%d)"), *Packet.GetRobotName(), Packet.GetChannelId());
+                    Service->CommBuffer->PutPacket(Packet);
+                }
             });
 
         WebSocket->Connect();
@@ -134,21 +133,22 @@ public:
 
     virtual bool SendData(const FString& RobotName, int32 ChannelId, const TArray<uint8>& PduData) override
     {
-        if (!bServiceEnabled || !WebSocket.IsValid() || WebSocket->IsConnected() == false)
+        if (!bServiceEnabled || !WebSocket.IsValid() || !WebSocket->IsConnected())
         {
             UE_LOG(LogTemp, Warning, TEXT("WebSocket not connected"));
             return false;
         }
 
-        UDataPacket* Packet = NewObject<UDataPacket>();
-        Packet->SetRobotName(RobotName);
-        Packet->SetChannelId(ChannelId);
-        Packet->SetPduData(PduData);
+        FDataPacket Packet;
+        Packet.SetRobotName(RobotName);
+        Packet.SetChannelId(ChannelId);
+        Packet.SetPduData(PduData);
 
-        TArray<uint8> Encoded = Packet->Encode();
+        TArray<uint8> Encoded = Packet.Encode();
         WebSocket->Send(Encoded.GetData(), Encoded.Num(), true);
         return true;
     }
+
 
     virtual FString GetServerUri() const override
     {

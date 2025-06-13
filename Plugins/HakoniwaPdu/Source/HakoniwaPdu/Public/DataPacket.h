@@ -1,20 +1,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
-#include "DataPacket.generated.h"
 
-UCLASS()
-class HAKONIWAPDU_API UDataPacket : public UObject
+struct FDataPacket
 {
-    GENERATED_BODY()
-
-private:
     FString RobotName;
     int32 ChannelId;
     TArray<uint8> BodyData;
 
-public:
     void SetRobotName(const FString& InName) { RobotName = InName; }
     void SetChannelId(int32 InId) { ChannelId = InId; }
     void SetPduData(const TArray<uint8>& InData) { BodyData = InData; }
@@ -58,53 +51,61 @@ public:
 
         return Data;
     }
-    static UDataPacket* Decode(const TArray<uint8>& Data)
+
+    static TOptional<FDataPacket> Decode(const TArray<uint8>& Data)
     {
-        if (Data.Num() < 12)
-        {
+        if (Data.Num() < 12) {
             UE_LOG(LogTemp, Error, TEXT("Data too short"));
-            return nullptr;
+            return {};
         }
 
         int32 Index = 0;
         int32 HeaderLength = 0;
-        FMemory::Memcpy(&HeaderLength, Data.GetData() + Index, sizeof(int32));
-        Index += sizeof(int32);
+        FMemory::Memcpy(&HeaderLength, Data.GetData() + Index, 4);
+        Index += 4;
 
         int32 NameLen = 0;
-        FMemory::Memcpy(&NameLen, Data.GetData() + Index, sizeof(int32));
-        Index += sizeof(int32);
+        FMemory::Memcpy(&NameLen, Data.GetData() + Index, 4);
+        Index += 4;
 
-        if (Index + NameLen + sizeof(int32) > Data.Num())
-        {
+        if (Index + NameLen + 4 > Data.Num()) {
             UE_LOG(LogTemp, Error, TEXT("Invalid robot name length"));
-            return nullptr;
+            return {};
         }
 
-        const ANSICHAR* Utf8Ptr = reinterpret_cast<const ANSICHAR*>(Data.GetData() + Index);
-        FUTF8ToTCHAR Converted(Utf8Ptr, NameLen);
-        FString RobotName(Converted.Length(), Converted.Get());
+        FString RobotName;
+        if (NameLen > 0) {
+            TArray<uint8> NameBytes;
+            NameBytes.Append(Data.GetData() + Index, NameLen);
+            NameBytes.Add(0);
+            RobotName = FString(UTF8_TO_TCHAR((const char*)NameBytes.GetData()));
+        }
         Index += NameLen;
 
         int32 ChannelId = 0;
-        FMemory::Memcpy(&ChannelId, Data.GetData() + Index, sizeof(int32));
-        Index += sizeof(int32);
+        FMemory::Memcpy(&ChannelId, Data.GetData() + Index, 4);
+        Index += 4;
+
+        int32 BodyLen = Data.Num() - Index;
+        if (BodyLen < 0) {
+            UE_LOG(LogTemp, Error, TEXT("Negative body length: %d"), BodyLen);
+            return {};
+        }
 
         TArray<uint8> Body;
-        int32 BodyLen = Data.Num() - Index;
-        if (BodyLen > 0)
-        {
+        if (BodyLen > 0) {
             Body.Append(Data.GetData() + Index, BodyLen);
         }
 
-        UDataPacket* Packet = NewObject<UDataPacket>();
-        Packet->SetRobotName(RobotName);
-        Packet->SetChannelId(ChannelId);
-        Packet->SetPduData(Body);
+        FDataPacket Packet;
+        Packet.RobotName = RobotName;
+        Packet.ChannelId = ChannelId;
+        Packet.BodyData = MoveTemp(Body);
+
         return Packet;
     }
-
 };
+
 
 // グローバル定数定義
 struct FPduMagicNumbers

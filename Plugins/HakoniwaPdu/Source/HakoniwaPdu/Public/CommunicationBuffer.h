@@ -80,10 +80,10 @@ public:
         PduBuffer.Empty();
     }
 
-    void PutPacket(UDataPacket* Packet)
+    void PutPacket(const FDataPacket& Packet)
     {
-        FString RobotName = Packet->GetRobotName();
-        int32 ChannelId = Packet->GetChannelId();
+        FString RobotName = Packet.GetRobotName();
+        int32 ChannelId = Packet.GetChannelId();
 
         FString PduName = GetPduName(RobotName, ChannelId); // © new
         if (PduName.IsEmpty())
@@ -93,7 +93,7 @@ public:
         }
 
         FString Key = GetKey(RobotName, PduName);
-        SetBuffer(Key, Packet->GetPduData());
+        SetBuffer(Key, Packet.GetPduData());
     }
     FString GetPduName(const FString& RobotName, int32 ChannelId) const
     {

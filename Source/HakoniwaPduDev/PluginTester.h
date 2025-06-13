@@ -16,10 +16,12 @@ class HAKONIWAPDUDEV_API UPluginTester : public UActorComponent
 	GENERATED_BODY()
 
 private:
+	UPROPERTY()
 	UWebSocketCommunicationService* service = nullptr;
+	UPROPERTY()
 	UPduManager* pduManager = nullptr;
 	bool isDeclared = false;
-	TArray<char> ReadTest(const FString& RobotName, const FString& PduName);
+	TArray<uint8> ReadTest(const FString& RobotName, const FString& PduName);
 
 public:	
 	// Sets default values for this component's properties
