@@ -36,6 +36,13 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+    // カメラ操作中は位置更新を停止
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (PC && PC->IsInputKeyDown(EKeys::RightMouseButton))
+    {
+        // カメラ操作中は更新しない
+        return;
+    }
     if (isDeclared == false) {
         if (pduManager->IsServiceEnabled()) {
             if (pduManager->DeclarePduForRead("Drone", "motor")) {
@@ -57,7 +64,8 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
         }
     }
     else {
-        TArray<char> buffer = ReadTest("Drone", "pos");
+        //TArray<char> buffer = ReadTest("Drone", "pos");
+#if 0
         if (buffer.Num() > 0) {
             HakoCpp_Twist pos;
             hako::pdu::PduConvertor<HakoCpp_Twist, hako::pdu::msgs::geometry_msgs::Twist> conv;
@@ -65,7 +73,39 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
             UE_LOG(LogTemp, Log, TEXT("Twist.linear = (%lf, %lf, %lf), angular = (%lf, %lf, %lf)"),
                 pos.linear.x, pos.linear.y, pos.linear.z,
                 pos.angular.x, pos.angular.y, pos.angular.z);
+            FVector NewLocation(pos.linear.x * 100.0f, -pos.linear.y * 100.0f, pos.linear.z * 100.0f);
+
+            FRotator NewRotation(
+                FMath::RadiansToDegrees(pos.angular.y),
+                FMath::RadiansToDegrees(pos.angular.z),
+                FMath::RadiansToDegrees(pos.angular.x)
+            );
+            if (FMath::IsFinite(NewLocation.X) && FMath::IsFinite(NewLocation.Y) && FMath::IsFinite(NewLocation.Z)) {
+                AActor* ParentActor = GetOwner();
+                if (ParentActor && IsValid(ParentActor))
+                {
+                    FVector CurrentLocation = ParentActor->GetActorLocation();
+                    FRotator CurrentRotation = ParentActor->GetActorRotation();
+                    // 急激な変更を避ける
+                    float MaxDistance = 1000.0f; // 1フレームでの最大移動距離
+                    if (FVector::Dist(CurrentLocation, NewLocation) > MaxDistance)
+                    {
+                        UE_LOG(LogTemp, Warning, TEXT("Position change too large, skipping update"));
+                        return;
+                    }
+
+                    // SetActorTransform を使用（より安全）
+                    FTransform NewTransform(NewRotation, NewLocation);
+                    //ParentActor->SetActorTransform(NewTransform, false, nullptr, ETeleportType::TeleportPhysics);
+                }
+            }
+            else {
+                UE_LOG(LogTemp, Error, TEXT("Invalid position: (%f, %f, %f)"), NewLocation.X, NewLocation.Y, NewLocation.Z);
+            }
+
         }
+#endif
+#if 0
         buffer = ReadTest("Drone", "motor");
         if (buffer.Num() > 0) {
             HakoCpp_HakoHilActuatorControls motor;
@@ -81,6 +121,7 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
             UE_LOG(LogTemp, Log, TEXT("motor.mode = %d"), motor.mode);
             UE_LOG(LogTemp, Log, TEXT("motor.flags = %llu"), motor.flags);
         }
+#endif
     }
 
 }
@@ -113,22 +154,11 @@ void UPluginTester::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
 
-    if (pduManager) {
+    if (pduManager && IsValid(pduManager)) {
         pduManager->StopService();
     }
-#if 0
-    const FName ModuleName = "HakoniwaPdu";
-    if (FModuleManager::Get().IsModuleLoaded(ModuleName))
-    {
-        bool bSuccess = FModuleManager::Get().UnloadModule(ModuleName);
-        if (bSuccess)
-        {
-            UE_LOG(LogTemp, Log, TEXT("HakoniwaPdu unloaded"));
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Failed to unload HakoniwaPdu"));
-        }
-    }
-#endif
+    FPlatformProcess::Sleep(1.0f);
+    pduManager = nullptr;
+    service = nullptr;
+
 }

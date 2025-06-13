@@ -28,12 +28,15 @@ private:
 
     FString ServerUri;
     FThreadSafeBool bServiceEnabled = false;
+    UPROPERTY()
+    bool bIsDestroying = false;
 
 public:
     virtual bool StartService(UObject* CommBufferObj, const FString& Uri = TEXT("")) override
     {
         CommBuffer = Cast<UCommunicationBuffer>(CommBufferObj);
         ServerUri = Uri;
+        TWeakObjectPtr<UWebSocketCommunicationService> WeakThis(this);
 
         WebSocket = FWebSocketsModule::Get().CreateWebSocket(Uri);
         WebSocket->OnConnected().AddLambda([this]()
@@ -42,24 +45,23 @@ public:
                 bServiceEnabled = true;
             });
 
-        WebSocket->OnClosed().AddLambda([this](int32 StatusCode, const FString& Reason, bool bWasClean)
-            {
-                UE_LOG(LogTemp, Warning, TEXT("WebSocket closed: %s"), *Reason);
-                bServiceEnabled = false;
-            });
 
-        WebSocket->OnRawMessage().AddLambda([this](const void* Data, SIZE_T Size, SIZE_T TotalSize)
+        WebSocket->OnRawMessage().AddLambda([WeakThis](const void* Data, SIZE_T Size, SIZE_T TotalSize)
             {
                 TArray<uint8> Payload;
                 Payload.Append(reinterpret_cast<const uint8*>(Data), Size);
 
-                AsyncTask(ENamedThreads::GameThread, [this, Payload]()
+                AsyncTask(ENamedThreads::GameThread, [WeakThis, Payload]()
                     {
+                        if (!WeakThis.IsValid()) return;
+                        UWebSocketCommunicationService* Service = WeakThis.Get();
+                        if (Service->bIsDestroying) return;
+
                         UDataPacket* Packet = UDataPacket::Decode(Payload);
-                        if (Packet && CommBuffer)
+                        if (Packet && Service->CommBuffer)
                         {
                             //UE_LOG(LogTemp, Log, TEXT("DataIn: Robot(%s) ChannelId(%d)"), *Packet->GetRobotName(), Packet->GetChannelId())
-                            CommBuffer->PutPacket(Packet);
+                            Service->CommBuffer->PutPacket(Packet);
                         }
                     });
             });
@@ -67,17 +69,53 @@ public:
         WebSocket->Connect();
         return true;
     }
-
+    bool bClosedByEvent = false;
     virtual bool StopService() override
     {
+        bIsDestroying = true;
+
         if (!bServiceEnabled || !WebSocket.IsValid())
         {
-            return false;
+            return true;
         }
 
         bServiceEnabled = false;
 
-        // イベントハンドラの解除
+        // Promise/Futureで完了を待つ
+        TSharedPtr<TPromise<void>> ClosePromise = MakeShared<TPromise<void>>();
+        TFuture<void> CloseFuture = ClosePromise->GetFuture();
+
+        WebSocket->OnClosed().AddLambda([this, ClosePromise](int32 StatusCode, const FString& Reason, bool bWasClean)
+            {
+                UE_LOG(LogTemp, Log, TEXT("WebSocket closed: %s"), *Reason);
+                this->bClosedByEvent = true;
+                this->bServiceEnabled = false;
+                ClosePromise->SetValue();
+            });
+
+        if (WebSocket->IsConnected())
+        {
+            WebSocket->Close();
+
+            if (CloseFuture.WaitFor(FTimespan::FromSeconds(1.0)))
+            {
+                UE_LOG(LogTemp, Log, TEXT("WebSocket closed successfully"));
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("WebSocket close timeout"));
+                // 強制SetValueでASSERT回避
+                if (!bClosedByEvent)
+                {
+                    ClosePromise->SetValue();
+                }
+            }
+        }
+        else {
+            ClosePromise->SetValue();
+        }
+
+        // クリーンアップ
         WebSocket->OnConnected().Clear();
         WebSocket->OnConnectionError().Clear();
         WebSocket->OnClosed().Clear();
@@ -85,13 +123,6 @@ public:
         WebSocket->OnRawMessage().Clear();
         WebSocket->OnMessageSent().Clear();
 
-        // 安全に切断
-        if (WebSocket->IsConnected())
-        {
-            WebSocket->Close();
-        }
-
-        // 遅延しても完全解放
         WebSocket.Reset();
         return true;
     }
