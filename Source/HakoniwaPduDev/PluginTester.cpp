@@ -36,13 +36,6 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    // カメラ操作中は位置更新を停止
-    APlayerController* PC = GetWorld()->GetFirstPlayerController();
-    if (PC && PC->IsInputKeyDown(EKeys::RightMouseButton))
-    {
-        // カメラ操作中は更新しない
-        return;
-    }
     if (isDeclared == false) {
         if (pduManager->IsServiceEnabled()) {
             if (pduManager->DeclarePduForRead("Drone", "motor")) {
@@ -65,7 +58,6 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
     }
     else {
         TArray<uint8> buffer = ReadTest("Drone", "pos");
-#if 1
         if (buffer.Num() > 0) {
             HakoCpp_Twist pos;
             hako::pdu::PduConvertor<HakoCpp_Twist, hako::pdu::msgs::geometry_msgs::Twist> conv;
@@ -107,7 +99,6 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
             }
 
         }
-#endif
 #if 0
         buffer = ReadTest("Drone", "motor");
         if (buffer.Num() > 0) {
@@ -138,7 +129,6 @@ TArray<uint8> UPluginTester::ReadTest(const FString& RobotName, const FString& P
         return buffer;  // 空の配列を返す
     }
     //UE_LOG(LogTemp, Log, TEXT("Read PDU TEST: robot=%s, pdu=%s, size=%d"),*RobotName, *PduName, pdu_size);
-#if 1
     buffer.SetNum(pdu_size);
 
     if (pduManager->ReadPduRawData(RobotName, PduName, buffer)) {
@@ -149,9 +139,6 @@ TArray<uint8> UPluginTester::ReadTest(const FString& RobotName, const FString& P
         //UE_LOG(LogTemp, Error, TEXT("Failed to read PDU: robot=%s, pdu=%s"), *RobotName, *PduName);
         return TArray<uint8>();  // 読み取り失敗時は空の配列を返す
     }
-#else
-    return TArray<uint8>();
-#endif
 }
 
 
