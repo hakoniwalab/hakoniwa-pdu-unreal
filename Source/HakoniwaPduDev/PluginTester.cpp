@@ -11,9 +11,9 @@ UPluginTester::UPluginTester()
     PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UPluginTester::BeginPlay()
+void UPluginTester::Initialize()
 {
-    Super::BeginPlay();
+    //Super::BeginPlay();
 
     UE_LOG(LogTemp, Log, TEXT("PluginTester BeginPlay"));
 
@@ -27,14 +27,21 @@ void UPluginTester::BeginPlay()
     service = NewObject<UWebSocketCommunicationService>();
     pduManager = NewObject<UPduManager>();
 
-    pduManager->Initialize("Config/webavatar.json", service);
-    pduManager->StartService("ws://172.31.9.252:8765");
+    pduManager->Initialize(ConfigPath, service);
+    pduManager->StartService(WebSocketUrl);
 
+    if (!Motor)
+    {
+        Motor = GetOwner()->FindComponentByClass<UDronePropellerComponent>();
+        if (!Motor)
+        {
+            UE_LOG(LogTemp, Error, TEXT("DronePropellerComponent not found!"));
+        }
+    }
 }
 
-void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UPluginTester::Tick()
 {
-    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
     if (isDeclared == false) {
         if (pduManager->IsServiceEnabled()) {
@@ -99,23 +106,23 @@ void UPluginTester::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
             }
 
         }
-#if 0
         buffer = ReadTest("Drone", "motor");
         if (buffer.Num() > 0) {
             HakoCpp_HakoHilActuatorControls motor;
             hako::pdu::PduConvertor<HakoCpp_HakoHilActuatorControls, hako::pdu::msgs::hako_mavlink_msgs::HakoHilActuatorControls> conv;
-            conv.pdu2cpp(buffer.GetData(), motor);
-            UE_LOG(LogTemp, Log, TEXT("motor.time_usec = %llu"), motor.time_usec);
+            conv.pdu2cpp((char*)buffer.GetData(), motor);
+            //UE_LOG(LogTemp, Log, TEXT("motor.time_usec = %llu"), motor.time_usec);
 
-            FString controlStr;
-            for (int i = 0; i < motor.controls.size(); i++) {
-                controlStr += FString::Printf(TEXT("%.3f "), motor.controls[i]);
+            if (Motor)
+            {
+                Motor->Rotate(
+                    motor.controls[0],
+                    motor.controls[1],
+                    motor.controls[2],
+                    motor.controls[3]
+                );
             }
-            UE_LOG(LogTemp, Log, TEXT("motor.controls = [%s]"), *controlStr);
-            UE_LOG(LogTemp, Log, TEXT("motor.mode = %d"), motor.mode);
-            UE_LOG(LogTemp, Log, TEXT("motor.flags = %llu"), motor.flags);
         }
-#endif
     }
 
 }
@@ -142,9 +149,8 @@ TArray<uint8> UPluginTester::ReadTest(const FString& RobotName, const FString& P
 }
 
 
-void UPluginTester::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void UPluginTester::Finalize()
 {
-    Super::EndPlay(EndPlayReason);
 
     if (pduManager && IsValid(pduManager)) {
         pduManager->StopService();

@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "PduManager.h"
 #include "WebSocketCommunicationService.h"
+#include "DronePropellerComponent.h"
 
 #include "PluginTester.generated.h"
 
@@ -24,17 +25,31 @@ private:
 	TArray<uint8> ReadTest(const FString& RobotName, const FString& PduName);
 
 public:	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hakoniwa")
+	FString ConfigPath = "Config/webavatar.json";
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hakoniwa")
+	FString WebSocketUrl = "ws://172.31.9.252:8765";
 	// Sets default values for this component's properties
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hakoniwa")
+	UDronePropellerComponent* Motor = nullptr;
+
 	UPluginTester();
 
 protected:
 	// Called when the game starts
-	virtual void BeginPlay() override;
+	//virtual void BeginPlay() override;
 
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	//virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 public:	
 	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	//virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
+	UFUNCTION(BlueprintCallable, Category = "Hakoniwa")
+	void Initialize();
+	UFUNCTION(BlueprintCallable, Category = "Hakoniwa")
+	void Finalize();
+	UFUNCTION(BlueprintCallable, Category = "Hakoniwa")
+	void Tick();
 };

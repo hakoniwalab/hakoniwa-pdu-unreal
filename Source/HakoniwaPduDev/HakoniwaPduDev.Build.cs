@@ -8,14 +8,18 @@ public class HakoniwaPduDev : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "HakoniwaPdu" });
+		PublicDependencyModuleNames.AddRange(new string[] { 
+            "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput",
+            "HakoniwaPdu",
+            "UMG",
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { 
 
 		});
         PublicIncludePaths.AddRange(
             new string[] {
-                "HakoniwaPdu/Public"
+                //"HakoniwaPdu/Public"
             }
         );
 
