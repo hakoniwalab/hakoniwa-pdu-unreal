@@ -221,7 +221,7 @@ public:
         return CommBuffer->GetPduSize(RobotName, PduName);
     }
 
-    bool FlushPduRawData(const FString& RobotName, const FString& PduName, const void* top_ptr, int32 ptr_size)
+    bool FlushPduRawData(const FString& RobotName, const FString& PduName, const TArray<uint8>& PduRawData)
     {
         if (!IsServiceEnabled())
         {
@@ -234,13 +234,6 @@ public:
             UE_LOG(LogTemp, Error, TEXT("CommBuffer is invalid"));
             return false;
         }
-
-        if (top_ptr == nullptr || ptr_size <= 0)
-        {
-            UE_LOG(LogTemp, Error, TEXT("Invalid memory pointer or size"));
-            return false;
-        }
-
         int32 ChannelId = CommBuffer->GetPduChannelId(RobotName, PduName);
         if (ChannelId < 0)
         {
@@ -254,10 +247,6 @@ public:
             UE_LOG(LogTemp, Error, TEXT("CommService became invalid during operation"));
             return false;
         }
-
-        TArray<uint8> PduRawData;
-        PduRawData.SetNum(ptr_size);
-        FMemory::Memcpy(PduRawData.GetData(), top_ptr, ptr_size);
 
         UCommunicationService* Service = CommService.Get();
         if (!IsValid(Service))

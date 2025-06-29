@@ -4,6 +4,7 @@
 #include "Modules/ModuleManager.h"
 #include "geometry_msgs/pdu_cpptype_conv_Twist.hpp"
 #include "hako_mavlink_msgs/pdu_cpptype_conv_HakoHilActuatorControls.hpp"
+#include "hako_msgs/pdu_cpptype_conv_GameControllerOperation.hpp"
 #include "pdu_convertor.hpp"
 
 UPluginTester::UPluginTester()
@@ -56,6 +57,14 @@ void UPluginTester::Tick()
             }
             else {
                 UE_LOG(LogTemp, Warning, TEXT("Failed to declare Drone:motor"));
+            }
+            if (pduManager->DeclarePduForWrite("Drone", "hako_cmd_game")) {
+                UE_LOG(LogTemp, Log, TEXT("Successfully declared Drone:hako_cmd_game"));
+                int pdu_size_hako_cmd_game = pduManager->GetPduSize("Drone", "hako_cmd_game");
+                pdu_buffer_hako_cmd_game.SetNum(pdu_size_hako_cmd_game);
+            }
+            else {
+                UE_LOG(LogTemp, Warning, TEXT("Failed to declare Drone:hako_cmd_game"));
             }
             isDeclared = true;
         }
@@ -123,6 +132,19 @@ void UPluginTester::Tick()
                 );
             }
         }
+        /*
+         * Game Control 
+         */
+        HakoCpp_GameControllerOperation game_ctrl_ops;
+        game_ctrl_ops.axis = {};
+        game_ctrl_ops.button = {};
+        hako::pdu::PduConvertor<HakoCpp_GameControllerOperation, hako::pdu::msgs::hako_msgs::GameControllerOperation> game_ctrl_cov;
+        int ret = game_ctrl_cov.cpp2pdu(game_ctrl_ops, (char*)pdu_buffer_hako_cmd_game.GetData(), pdu_buffer_hako_cmd_game.Num());
+        if (ret < 0) {
+            UE_LOG(LogTemp, Error, TEXT("game_ctrl_cov error"));
+        }
+        (void)WriteTest("Drone", "hako_cmd_game", pdu_buffer_hako_cmd_game);
+
     }
 
 }
@@ -147,8 +169,17 @@ TArray<uint8> UPluginTester::ReadTest(const FString& RobotName, const FString& P
         return TArray<uint8>();  // “Ç‚ÝŽæ‚èŽ¸”sŽž‚Í‹ó‚Ì”z—ñ‚ð•Ô‚·
     }
 }
-
-
+bool UPluginTester::WriteTest(const FString& RobotName, const FString& PduName, TArray<uint8> RawData)
+{
+    bool ret = pduManager->FlushPduRawData(RobotName, PduName, RawData);
+    if (ret == false) {
+        UE_LOG(LogTemp, Error, TEXT("Can not write pdu..."));
+    }
+    else {
+        UE_LOG(LogTemp, Log, TEXT("write success: %s %s %d"), *RobotName, *PduName, RawData.Num());
+    }
+    return ret;
+}
 void UPluginTester::Finalize()
 {
 

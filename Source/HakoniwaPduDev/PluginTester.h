@@ -23,6 +23,8 @@ private:
 	UPduManager* pduManager = nullptr;
 	bool isDeclared = false;
 	TArray<uint8> ReadTest(const FString& RobotName, const FString& PduName);
+	bool WriteTest(const FString& RobotName, const FString& PduName, TArray<uint8> RawData);
+	TArray<uint8> pdu_buffer_hako_cmd_game;
 
 public:	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hakoniwa")
