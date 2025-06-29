@@ -85,11 +85,12 @@ void UPluginTester::Tick()
 #endif
             FVector NewLocation(pos.linear.x * 100.0f, -pos.linear.y * 100.0f, pos.linear.z * 100.0f);
 
-            FRotator NewRotation(
-                FMath::RadiansToDegrees(pos.angular.y),
-                FMath::RadiansToDegrees(pos.angular.z),
-                FMath::RadiansToDegrees(pos.angular.x)
+            FRotator NewRotation = FRotator(
+                -FMath::RadiansToDegrees(pos.angular.y),   // Pitch ← ROSのPitch（Y軸）→ 符号反転
+                -FMath::RadiansToDegrees(pos.angular.z),   // Yaw   ← ROSのYaw（Z軸） → 符号反転
+                FMath::RadiansToDegrees(pos.angular.x)     // Roll  ← ROSのRoll（X軸）→ そのまま
             );
+
             if (FMath::IsFinite(NewLocation.X) && FMath::IsFinite(NewLocation.Y) && FMath::IsFinite(NewLocation.Z)) {
                 AActor* ParentActor = GetOwner();
                 if (ParentActor && IsValid(ParentActor))
