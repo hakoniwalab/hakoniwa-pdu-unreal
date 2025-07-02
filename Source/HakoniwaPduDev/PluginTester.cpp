@@ -58,14 +58,6 @@ void UPluginTester::Tick()
             else {
                 UE_LOG(LogTemp, Warning, TEXT("Failed to declare Drone:motor"));
             }
-            if (pduManager->DeclarePduForWrite("Drone", "hako_cmd_game")) {
-                UE_LOG(LogTemp, Log, TEXT("Successfully declared Drone:hako_cmd_game"));
-                int pdu_size_hako_cmd_game = pduManager->GetPduSize("Drone", "hako_cmd_game");
-                pdu_buffer_hako_cmd_game.SetNum(pdu_size_hako_cmd_game);
-            }
-            else {
-                UE_LOG(LogTemp, Warning, TEXT("Failed to declare Drone:hako_cmd_game"));
-            }
             isDeclared = true;
         }
         else {
@@ -133,18 +125,6 @@ void UPluginTester::Tick()
                 );
             }
         }
-        /*
-         * Game Control 
-         */
-        HakoCpp_GameControllerOperation game_ctrl_ops;
-        game_ctrl_ops.axis = {};
-        game_ctrl_ops.button = {};
-        hako::pdu::PduConvertor<HakoCpp_GameControllerOperation, hako::pdu::msgs::hako_msgs::GameControllerOperation> game_ctrl_cov;
-        int ret = game_ctrl_cov.cpp2pdu(game_ctrl_ops, (char*)pdu_buffer_hako_cmd_game.GetData(), pdu_buffer_hako_cmd_game.Num());
-        if (ret < 0) {
-            UE_LOG(LogTemp, Error, TEXT("game_ctrl_cov error"));
-        }
-        (void)WriteTest("Drone", "hako_cmd_game", pdu_buffer_hako_cmd_game);
 
     }
 
