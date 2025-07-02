@@ -1,6 +1,3 @@
-[submodule "ThirdParty/hakoniwa-ros2pdu"]
-	path = Plugins/HakoniwaPdu/Source/ThirdParty/hakoniwa-ros2pdu
-	url = https://github.com/toppers/hakoniwa-ros2pdu.git
-[submodule "Plugins/HakoniwaPdu/Source/ThirdParty/hakoniwa-ros2pdu"]
-	path = Plugins/HakoniwaPdu/Source/ThirdParty/hakoniwa-ros2pdu
+[submodule "HakoniwaPdu/Source/ThirdParty/hakoniwa-ros2pdu"]
+	path = HakoniwaPdu/Source/ThirdParty/hakoniwa-ros2pdu
 	url = https://github.com/toppers/hakoniwa-ros2pdu.git
