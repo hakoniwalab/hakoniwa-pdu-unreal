@@ -4,11 +4,25 @@ hakoniwa-pdu-unreal は箱庭プロジェクトで使用される PDU (Protocol 
 
 本リポジトリは Unreal Engine 環境で[箱庭 Web サーバー](https://github.com/toppers/hakoniwa-webserver) と接続し、PDU データの送受信を行うモジュールとなっています。
 
-現時点では WebClient による通信のみサポートしていますが、`CommunicationService` インタフェースを実装することでさまざまな通信方式へ拡張可能です。ROS2 メッセージから生成された PDU 型定義や通信サービスも含まれています。
+PDUデータ型は、ROS2 メッセージファイルで定義します。また、プログラミング言語毎のデータ型や通信用のバイナリデータ変換は、箱庭ツール(hakoniwa-ros2pdu)で自動生成されます。
+
+
+現時点では WebClient による通信のみサポートしていますが、`CommunicationService` インタフェースを実装することでさまざまな通信方式へ拡張可能です。
 
 詳細な利用例として、箱庭ドローンのビジュアライズを行う [hakoniwa-unreal-drone](https://github.com/hakoniwalab/hakoniwa-unreal-drone) プロジェクトがあります。
 
 本プラグインを組み込んだ実践例として参考になります。
+
+## アーキテクチャ
+
+![image](https://github.com/user-attachments/assets/ed928416-93d5-4b74-ae74-93017baababd)
+
+箱庭のアーキテクチャは、シミュレーションと ビジュアライゼーション の責務を分離する思想です。
+
+- シミュレーションは、Hakoniwa Core システム内で独立して実行します。
+- Unreal Engine はビジュアライゼーションクライアントとして動作し、シミュレーションでビジュアライズしたいものを PDU データとして受信し、その動作を描画します。
+- 本リポジトリは Unreal Engine 側の `Hakoniwa PDU WebClient`です。
+
 
 ## 必要条件
 - Unreal Engine 5.6 (動作確認済み)
