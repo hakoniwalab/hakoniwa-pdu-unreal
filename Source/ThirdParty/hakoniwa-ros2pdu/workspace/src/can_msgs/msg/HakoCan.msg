@@ -1,2 +1,0 @@
-HakoCanHead head
-HakoCanBody body

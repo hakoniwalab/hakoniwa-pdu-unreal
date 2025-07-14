@@ -1,2 +1,0 @@
-int32 request_id
-sensor_msgs/CompressedImage image

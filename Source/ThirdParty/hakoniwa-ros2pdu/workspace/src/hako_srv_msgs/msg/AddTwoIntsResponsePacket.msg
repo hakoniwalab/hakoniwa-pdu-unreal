@@ -1,2 +1,0 @@
-ServiceResponseHeader header
-AddTwoIntsResponse body

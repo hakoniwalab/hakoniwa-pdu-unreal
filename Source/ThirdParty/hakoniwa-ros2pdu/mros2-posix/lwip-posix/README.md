@@ -1,2 +1,0 @@
-# lwip-posix
-lwip posix

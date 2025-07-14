@@ -1,3 +1,0 @@
-/opt/ros/foxy/share
-/root/workspace/hakoniwa-ros2pdu/workspace/src
-/root/workspace/hakoniwa-ros2pdu/third-party
